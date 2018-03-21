@@ -31,20 +31,34 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  List<String> _places = <String>[];
+  List<Place> _places = <Place>[];
   Map<String,double> _ourPlace;
 
   @override
   initState() {
     super.initState();
-    _places = new List<String>();
-    listenForLocation();
-    _places = new List.generate(100, (r) => 'Resto $r');    
+    dolocationstuff();
+  }
+
+  dolocationstuff() async {
+    await listenForLocation();  // Retrieve current coordinates
+    await listenForPlaces();
   }
 
   listenForLocation() async {
     _ourPlace = await getCurrentLocation();
     print(_ourPlace.values);
+    print(_ourPlace["latitude"]);
+    _ourPlace["latitude"] = 47.3667;
+    _ourPlace["logitude"] = 8.5500;
+  }
+
+  listenForPlaces() async {
+    var stream = await getPlaces(_ourPlace["latitude"], _ourPlace["longitude"], 'restaurant');
+    stream.listen((place) =>
+    setState( () => _places.add(place))    
+    );
+    print("placeslength" + _places.length.toString());
   }
 
 
@@ -56,11 +70,14 @@ class _MyHomePageState extends State<MyHomePage> {
         title: new Text(widget.title),
       ),
       body: new Center(        
-        
-        child: new Text(_ourPlace["latitude"].toString() + " " + _ourPlace["longitude"].toString())
-      //   child: new ListView(
-      //     children: _places.map((r) => new Text(r["latitude"])).toList(),
-      // )
+        child: new ListView(
+          children: _places.map((place) => new Text(place.name)).toList(),
+        )
+
+
+
+       // child: new Text(_ourPlace["latitude"].toString() + " " + _ourPlace["longitude"].toString())
+
     ),
   );
   }

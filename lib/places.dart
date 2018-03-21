@@ -25,7 +25,7 @@ Future<Map<String,double>> getCurrentLocation() async {
 }
 
 
-class Place{
+class Place {
   final String name;
   final double rating;
   final String address;
@@ -38,11 +38,11 @@ class Place{
   String toString() => 'Place: $name';
 }
 
-getPlaces(double lat, double lng, String type) async {
+Future<Stream<Place>> getPlaces(double lat, double lng, String type) async {
   var url = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json' +
   '?location=$lat,$lng' +
   '&radius=500&type=$type' +
-  'key=$api_key';
+  '&key=$api_key';
 
   // http.get(url).then(
   //   (res) => print(res.body)
@@ -52,6 +52,14 @@ getPlaces(double lat, double lng, String type) async {
   var streamedRes = await client.send(
     new http.Request('get', Uri.parse(url))
   );
+
+  return streamedRes.stream
+  .transform(UTF8.decoder)
+  .transform(JSON.decoder)
+  .expand((jsonbody) => (jsonbody as Map) ['results'])
+  .map((jsonPlace) => new Place.fromJson(jsonPlace))
+  .listen((data) => print(data))
+  .onDone(() => client.close());
 }
 
 
